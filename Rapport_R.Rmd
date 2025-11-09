@@ -1,0 +1,11 @@
+---
+title: "Rapport_R"
+author: "Aurore Hoste"
+date: "2025-11-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
