@@ -1,6 +1,6 @@
 ---
 title: "Rapport_R"
-author: "Aurore Hoste"
+author: "Aurore Hauste"
 date: "2025-11-09"
 output: html_document
 ---
