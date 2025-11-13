@@ -1,0 +1,35 @@
+---
+title: "Rapport_R"
+author: "Barthélemy Elliot, Hoste Aurore,  Mazgar Ines, Pons Manuel"
+date: "2025-11-09"
+output: html_document
+---
+
+### Analyse des performances de Faker sur League of legends avec R
+
+#### 1. L'enjeu principal : Obtenir les données (L'API Riot) 
+
+Dans le cadre d'un travail de groupe en utilisant le package Skinny sur R, nous 
+souhaitons analyser les données de Faker (Lee Sang-hyeok), considéré 
+comme le meilleur joueur de l'histoire de League of Legends. Avec un palmarès exceptionnel : six titre de champion du monde, deux titres internationaux et
+dix fois champion de Corée. Il a donc battu tout les records depuis sa premier game 
+en 2013.Figure emblémtique du gaming, Faker incarne l'excellence et l'innovation dans ce domaine ce qui en fait un sujet d'étude idéal pour notre projet. 
+
+Nous avons choisi Faker, notamment pour sa célébrité, les nombreuses analyses disponibles sur son jeu, mais aussi pour étudier les performances d’un champion d’exception.
+Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases.
+
+Notre objectif est d’étudier ses performances en les publient sur un site de statistiques et en les représentant graphiquement. Ces données pourraient nous aider à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettraient également d’analyser sa capacité d’adaptation et son évolution au fil du temps. Enfin, ces analyses pourraient aider d’autres joueurs à s’améliorer.
+
+Pour obtenir les données, on a été sur le site Riot Games : 
+https://developer.riotgames.com/apis#match-v5/GET_getMatch 
+
+Voici les jeux de données qu'on a choisi :
+
+```{r setup, include=FALSE}
+
+
+```
+
+
+#### 2. Réprésentation sur un site avec Skinny 
+
