@@ -5,31 +5,178 @@ date: "2025-11-09"
 output: html_document
 ---
 
-### Analyse des performances de Faker sur League of legends avec R
+# Analyse des Matchs de Faker
 
-#### 1. L'enjeu principal : Obtenir les données (L'API Riot) 
+## 1. L'enjeu principal : Obtenir les données (L'API Riot) 
 
-Dans le cadre d'un travail de groupe en utilisant le package Skinny sur R, nous 
-souhaitons analyser les données de Faker (Lee Sang-hyeok), considéré 
-comme le meilleur joueur de l'histoire de League of Legends. Avec un palmarès exceptionnel : six titre de champion du monde, deux titres internationaux et
-dix fois champion de Corée. Il a donc battu tout les records depuis sa premier game 
-en 2013.Figure emblémtique du gaming, Faker incarne l'excellence et l'innovation dans ce domaine ce qui en fait un sujet d'étude idéal pour notre projet. 
+Dans le cadre d'un travail de groupe, nous souhaitons analyser les données de jeu de Faker (Lee Sang-hyeok, en coréen 이상혁), considéré comme le meilleur joueur de l'histoire de League of Legends en utilisant RStudio. Il joue au poste de Midlaner pour l'équipe T1. 
+Avec un palmarès exceptionnel : six titres de champion du monde, deux titres internationaux et dix fois champion de Corée. Il a donc battu tous les records depuis sa première game en 2013. Figure emblématique du gaming, il incarne la perfection et l'innovation dans ce domaine ce qui en fait un sujet d'étude idéal pour notre projet. 
 
-Nous avons choisi Faker, notamment pour sa célébrité, les nombreuses analyses disponibles sur son jeu, mais aussi pour étudier les performances d’un champion d’exception.
-Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases.
-
-Notre objectif est d’étudier ses performances en les publient sur un site de statistiques et en les représentant graphiquement. Ces données pourraient nous aider à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettraient également d’analyser sa capacité d’adaptation et son évolution au fil du temps. Enfin, ces analyses pourraient aider d’autres joueurs à s’améliorer.
+Nous avons choisi Faker, notamment pour sa popularité, les nombreuses données disponibles sur ses parties mais aussi pour étudier les performances d’un champion reconnu.Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases.
+Notre objectif est d’étudier ses performances en les publiant sur un site de statistiques et en les représentant graphiquement. Ces données pourraient nous aider à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettront de mieux comprendre comment il s’adapte et comment il progresse avec le temps. Et en plus, ces analyses pourront servir d’inspiration ou d’aide d'autres joueurs.
 
 Pour obtenir les données, on a été sur le site Riot Games : 
 https://developer.riotgames.com/apis#match-v5/GET_getMatch 
 
-Voici les jeux de données qu'on a choisi :
-
+Voici les jeux de données qu'on a choisi en tableau, venant du fichier "faker_all_matches.csv" : 
 ```{r setup, include=FALSE}
+library(kableExtra)
+# Création d'un data frame avec les descriptions
+columns_description <- data.frame(
+  Column = c(
+    "match_id", "game_mode", "duration_sec", "win",
+    "game_ended_in_early_surrender", "championName", "lane",
+    "champ_level", "gold_earned", "items_purchased", "items",
+    "damage_dealt_to_buildings", "damage_dealt_to_objectives",
+    "damage_dealt_to_turrets", "damage_taken", "minions_killed",
+    "baron_kills", "dragon_kills", "first_bloodKill",
+    "first_tower_kill", "kills", "solo_kills", "double_kills",
+    "triple_kills", "quadra_kills", "penta_kills",
+    "largest_multi_kill", "kill_participation", "deaths", "assists"
+  ),
+  Description = c(
+    "Identifiant unique de chaque match",
+    "Mode de jeu (exemple : CLASSIC, CHERRY, PRACTICETOOL)",
+    "La durée du match en secondes",
+    "Indique si le joueur a gagné le match (booléen : vrai/faux)",
+    "Indique si le match s'est terminé par une reddition précoce (booléen : vrai/faux)",
+    "Nom du champion joué pendant le match",
+    "Voie sur laquelle le joueur a évolué (exemple : MIDDLE, TOP, NONE)",
+    "Niveau atteint par le champion pendant le match",
+    "Quantité d'or gagnée par le joueur pendant le match",
+    "Nombre d'objets achetés par le joueur",
+    "Liste des identifiants des objets achetés, séparés par des points-virgules",
+    "Dégâts infligés aux bâtiments",
+    "Dégâts infligés aux objectifs",
+    "Dégâts infligés aux tourelles",
+    "Dégâts subis par le joueur",
+    "Nombre de sbires tués par le joueur",
+    "Nombre de fois où le joueur a tué le Baron Nashor",
+    "Nombre de fois où le joueur a tué le Dragon",
+    "Indique si le joueur a obtenu le premier sang (booléen : vrai/faux)",
+    "Indique si le joueur a détruit la première tourelle (booléen : vrai/faux)",
+    "Nombre de kills réalisés par le joueur",
+    "Nombre de kills en solo",
+    "Nombre de double kills",
+    "Nombre de triple kills",
+    "Nombre de quadra kills",
+    "Nombre de penta kills",
+    "Plus grand nombre de kills en série",
+    "Taux de participation aux kills",
+    "Nombre de morts du joueur",
+    "Nombre d'assists réalisés par le joueur"
+  ),
+  stringsAsFactors = FALSE
+)
+
+# Affichage du tableau en Markdown
+kable(columns_description, format = "pipe", caption = "Description des colonnes de l'API Riot") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+print(columns_description)
+knitr::kable(columns_description)
+```
+```{r}
+knitr::kable(columns_description)
+```
+
+Nous avons fait des filtrations de données car elles sont importantes pour la suite des analyses statistiques. Ces filtrations nous permettent de nous focaliser sur les parties normales (classiques) et les parties où les joueurs étaient présents au commencement.Pour cela, les données des parties personnalisées et le mode du jeu du moment considérés comme des données bruits ont été éliminés. Ainsi que les parties qui se terminaient avant 5 minutes de jeu. 
+
+## 2. Explication statistique : 
+Notre application permet de représenter les indicateurs de performance de Faker, plus précisément :
+– Les KDA (Kill/Death/Assist) sont les résultats du nombre d'ennemis tués, du nombre de fois où il est mort, du nombre de fois où il a aidé un coéquipier à tuer un ennemi.
+– Les Gold sont le nombre de monnaies récoltées qui sont importantes dans le jeu dans le but d'avoir des objets plus performants. – Les dégâts aux champions sont le total des points de vie (PV) que Faker a retirés aux adversaires. 
+– Les builds d'items sont l'équipement. 
+
+### 2.2. Page 2 de l'application, les statistiques globales :
+
+#### 1. Les habitudes de jeux de Faker 
+
+1) L'évolution du KDA de Faker en fonction des parties 
+2) Les champions qui utilisent le plus 
+3) Les rôles que Lee joue le plus (haut, milieu, bas, support, jungle) 
+
+Distribution du KDA : 
+```{r}
+
 
 
 ```
 
+La majorité des parties ont tendance à être en dessous de 5 de KDA. C'est ce à quoi on s'attendait au vu de son niveau professionnel. La médiane (la droite pointillée en rouge) se situe entre 3,5 et 4 de KDA. Cela signifie que dans une partie normale, Faker contribue 4 fois plus aux éliminations des joueurs qu'il ne meurt. 
+Les parties au-delà de 5 de KDA peuvent être encore plus élevées que 20. Ce sont des parties où il a largement dominé la partie sans mourir. 
+Contrairement à certains joueurs qui jouent uniquement pour avoir beaucoup de "Kills", Faker a souvent un nombre d'assistances très élevé. Il est célèbre pour jouer des personnages utilitaires (comme Galio) pour aider son équipe partout sur la carte, quitte à se sacrifier. Un KDA de 4 ou 5 est excellent chez un pro.
 
-#### 2. Réprésentation sur un site avec Skinny 
+Top 10 des champions les plus joués avec leur rôle : 
+```{r}
+
+```
+
+On remarque que Lee joue le plus souvent avec Azir (un des champions de L.O.L.). 
+en mode milieu (si on compare avec le graphique des parties par rôle).
+Azir est la signature de Faker, c'est un mage qui demande une maîtrise des soldats de sable. 
+
+Ensuite, les champions Voyageurs, Roamers (Taliyah, Galio, Twisted Fate) sont joués mais moins fréquemment. Ces personnages sont faits pour quitter la "Midlane" et aller aider les autres. Ce constat nous permet de faire le lien avec le graphique précédent, cela renforce sa stratégie de travailler en équipe. Avec quelques personnages, Lee joue à la Voie du Haut. 
+Il sait gérer à la fois Mid et Top, ce qui est une stratégie intéressante pour déstabiliser l'adversaire, car il ne sait pas où le champion va aller. 
+
+D'autres champions dans un autre style, des carrys purs (du corps à corps) sont utilisés comme Yone, Sylas.
+Les derniers champignons ont joué que récemment. Le champion Ryze est joué avec la voie de la jungle et le champion Annie est joué avec la voie du bas.
+Cela prouve qu'il s'est actualisé en même temps que le jeu. 
+
+Fréquence des parties par rôle : 
+```{r}
+
+```
+
+La représentation confirme les propos précédents, le milieu est dominant par rapport aux autres rôles, peu importe les champions. Les autres propositions sont presque négligeables. On parle des hauts avec 7,7 %, puis de Jungle et enfin du bas avec 1,1 %, négligeable. 
+
+
+#### 2. Les Farming : 
+Le farming est l'action de tuer des "monstres" qui se trouvent sur notre chemin. 
+Grâce à cela, plusieurs points sont notés, comme les sbires, les noms des "monstres", apparaissant à un intervalle régulier à partir de 1 minute 
+30 du début du jeu jusqu'à la fin. 
+
+```{r}
+
+```
+
+Sur la même cadence, la voie du milieu reste constant s'il perd ou s'il gagne. Ces résultats montrent que quand Faker gagne en Mid, il tue plus de sbires. 
+
+Tandis que la voie du Haut est plus nuancé, les parties perdues ont des écarts plus importantes mais en présence d'une médiane plus élevée. Cela signie qu'il tue plus sbires en moyenne quand il perd. C'est une autre façon de jouer, qui le mets moins en valeur ce qui paraît cohérent au vue des résultats. 
+
+Nous avons retirer les deux autres types rôles car les données sont négligeables et peu révélatrices. 
+
+
+Le principal intérêt des sbires est de gagner de l’or dans le jeux dans le but d'acheter des objets plus performant. En même temps, nous pouvons augmenter de state pour donner plus d’impact dans la partie. 
+```{r}
+
+```
+
+On constate qu'aux plus il obtient de l'or, au plus il a de chance de gagner même avec le rôle qui maîtrise le moins. 
+Le graphique Lose dans TOP est en lien avec la représentation en fonction des sbire tué car les écarts des valeurs sont toujours élévés. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
