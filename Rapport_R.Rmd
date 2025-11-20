@@ -1,6 +1,6 @@
 ---
 title: "Rapport_R"
-author: "Barthélemy Elliot, Hoste Aurore,  Mazgar Ines, Pons Manuel"
+author: "Barthélemy Elliot, Hoste Aurore,  Mazgar Ines, Pons Manuel, Rouge Gabriel"
 date: "2025-11-09"
 output: html_document
 ---
@@ -26,13 +26,13 @@ Voici une explication vulgarisée du processus :
 ### Etape 0 : Configurer l'algorithme 
   La configuration de l'algorithme se fait en remplissant les variables au début de celui-ci. Pour ce faire, nous devons : 
     - **Authentifier une application** auprès de RIOT. C'est à dire ; se créer un compte, déclarer notre application (en indiquant l'usage que nous ferons des données), et attendre qu'ils nous autorisent de récupérer ces données. Cette autorisation prend la forme d'une **clé API**.
-    - Récupérer le **PUUID** (Player Unique User Id) du compte coréen de Faker. C'est un code qui est dynamique et il faut donc le récupérer régulièrement au cas où il est mis à jour. Nous le faisons manuellement via l'appel ```` de l'API.
+    - Récupérer le **PUUID** (Player Unique User Id) du compte coréen de Faker. C'est un code qui est dynamique et il faut donc le récupérer régulièrement au cas où il est mis à jour. Nous le faisons manuellement via l'appel ``AccountV1: Accounts by Riot Id`` de l'API.
 
 ### Etape 1 : Récupérer les MatchID
-  Grâce à l'appel ````, nous récupérons en une itération l'ensemble des identifiants uniques des parties jouées par faker.
+Grâce à l'appel ``MatchV5:Match ids by PUUID``, nous récupérons en une itération l'ensemble des identifiants uniques des parties jouées par faker.
 
 ### Etape 2 : Récupérer les MatchDTO
-  Nous faisont ensuite usage de l'appel ```` pour obtenir les MatchDTO (DTO signifiant "Data Transfer Object") correspondants. Cette structure de donnée complexe contient la totalité des informations que RIOT nous donne au sujet de ces parties de jeu. Le détail de la structure de cette donnée est disponible sur le site de l'API.
+Nous faisont ensuite usage de l'appel ``MatchV5: Match by MatchId`` pour obtenir les MatchDTO (DTO signifiant "Data Transfer Object") correspondants. Cette structure de donnée complexe contient la totalité des informations que RIOT nous donne au sujet de ces parties de jeu. Le détail de la structure de cette donnée est disponible sur le site de l'API.
 
 ### Etape 3 : Traiter et enregistrer
   La structure de données étant complexe et imbriquée à plusieurs niveau, nous modifions le format des données pour le rendre plus exploitable et finalement en faire un fichier CSV qui prend cette forme : 
