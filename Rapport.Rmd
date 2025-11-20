@@ -1,0 +1,305 @@
+---
+title: "Rapport sur Faker"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: "cerulean"
+date: "2025-11-20"
+---
+
+```{css, echo=FALSE}
+/* Personnalisation des titres */
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+h2 {
+  color: #3498db;
+  border-left: 4px solid #3498db;
+  padding-left: 10px;
+}
+
+h3 {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Style pour le sommaire */
+#TOC {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid #e9ecef;
+}
+```
+
+
+```{r setup, include=FALSE, echo=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(here)
+library(zoo)
+knitr::opts_chunk$set(echo = TRUE)
+
+faker_all_matches <- read_csv("faker_all_matches.csv")
+
+faker_classique <- faker_all_matches |>
+  filter(game_mode == "CLASSIC", game_ended_in_early_surrender == "FALSE") |>
+  select(-end_of_game_result, -game_mode, -game_name, -game_version, -game_ended_in_early_surrender, -item_names, -item_icons, -vision_score)
+
+```
+
+### Barthélemy Elliot, Hoste Aurore, Mazgar Ines, Pons Manuel, Rouge Gabriel
+
+# Analyse des Matchs de Faker
+
+## 1. L’enjeu principal : Obtenir les données (L’API Riot)
+
+Dans le cadre d’un travail de groupe, nous avons souhaité analyser les données de jeu de Faker (Lee Sang-hyeok,en coréen 이상혁), considéré comme le meilleur joueur de l’histoire de League of Legends en utilisant RStudio. Il joue au poste de Midlaner pour l’équipe T1. Avec un palmarès exceptionnel : six titres de champion du monde, deux titres internationaux et plus de dix fois champion de la Ligue Coréenne. Il a donc battu tous les records depuis sa première apparition sur la scène en 2013. Figure emblématique du gaming, il incarne la perfection et l’innovation dans ce domaine ce qui en fait un sujet d’étude idéal pour notre projet.
+
+Nous avons choisi Faker, notamment pour sa popularité pour les nombreuses données disponibles sur ses parties mais aussi pour étudier les performances d’un champion reconnu. Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases. Notre objectif est d’étudier les performances de Faker en les représentant graphiquement. Ces données pourraient aider un utilisateur à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettront de mieux comprendre comment il s’adapte et comment il progresse avec le temps. Ces analyses sont utiles pour un joueur débutant qui souhaite se comparer aux meilleurs, ou pour un joueur expérimenté qui voudrait étudier les critères de réussite du plus grand joueur du monde.
+
+
+Ces données sont extraites de l'API (Application Programming Interface) officielle de la société RIOT, combinée à quelques données de l'API DDragon qui expose certains assets (icônes, illustrations, etc.) du jeu League Of Legends.
+
+Une API est une source de données accessibles via des appels HTTP. Ici, grâce à un bref script python présent dans l'archive, nous itérons automatiquement sur toutes les parties de League Of Legends jouées par Faker sur le serveur coréen pour en extraire les données proposées par l'API.
+
+L'algorithme s'occupe également de traiter puis ranger les données dans un fichier CSV pour faciliter leur usage dans notre rapport et notre application en R. 
+
+Voici une explication vulgarisée du processus : 
+
+### Etape 0 : Configurer l'algorithme 
+  La configuration de l'algorithme se fait en remplissant les variables au début de celui-ci. Pour ce faire, nous devons : 
+    - **Authentifier une application** auprès de RIOT. C'est à dire ; se créer un compte, déclarer notre application (en indiquant l'usage que nous ferons des données), et attendre qu'ils nous autorisent de récupérer ces données. Cette autorisation prend la forme d'une **clé API**.
+    - Récupérer le **PUUID** (Player Unique User Id) du compte coréen de Faker. C'est un code qui est dynamique et il faut donc le récupérer régulièrement au cas où il est mis à jour. Nous le faisons manuellement via l'appel ``AccountV1: Accounts by Riot Id`` de l'API.
+
+### Etape 1 : Récupérer les MatchID
+Grâce à l'appel ``MatchV5:Match ids by PUUID``, nous récupérons en une seule fois l'ensemble des identifiants uniques des parties jouées par faker.
+
+### Etape 2 : Récupérer les MatchDTO
+Nous faisont ensuite usage de l'appel ``MatchV5: Match by MatchId`` pour obtenir les MatchDTO (DTO signifiant "Data Transfer Object") correspondants. Cette structure de donnée contient la totalité des informations que RIOT nous donne au sujet de ces parties de jeu. Le détail de la structure de cette donnée est disponible sur le site de l'API.
+
+### Etape 3 : Traiter et enregistrer
+  La structure de données étant complexe et immense, nous modifions le format des données pour le rendre plus simple à visualiser et finalement en faire un fichier CSV qui prend cette forme : 
+
+| Colonne | Description |
+|---------------------------|---------------------------------------------|
+| match_id | Identifiant unique de chaque match |
+| game_mode | Mode de jeu (exemple : CLASSIC, CHERRY, PRACTICETOOL) |
+| duration_sec | La durée du match en secondes |
+| win | Indique si le joueur a gagné le match (booléen : vrai/faux) |
+| game_ended_in_early_surrender | Indique si le match s'est terminé par une reddition précoce (booléen) |
+| championName | Nom du champion joué pendant le match |
+| lane | Voie sur laquelle le joueur a évolué (exemple : MIDDLE, TOP, NONE) |
+| champ_level | Niveau atteint par le champion pendant le match |
+| gold_earned | Quantité d'or gagnée par le joueur pendant le match |
+| items_purchased | Nombre d'objets achetés par le joueur |
+| items | Liste des identifiants des objets achetés, séparés par des points-virgules |
+| damage_dealt_to_buildings | Dégâts infligés aux bâtiments |
+| damage_dealt_to_objectives | Dégâts infligés aux objectifs |
+| damage_dealt_to_turrets | Dégâts infligés aux tourelles |
+| damage_taken | Dégâts subis par le joueur |
+| minions_killed | Nombre de sbires tués par le joueur |
+| baron_kills | Nombre de fois où le joueur a tué le Baron Nashor |
+| dragon_kills | Nombre de fois où le joueur a tué le Dragon |
+| first_bloodKill | Indique si le joueur a obtenu le premier sang (booléen) |
+| first_tower_kill | Indique si le joueur a détruit la première tourelle (booléen) |
+| kills | Nombre de kills réalisés par le joueur |
+| solo_kills | Nombre de kills en solo |
+| double_kills | Nombre de double kills |
+| triple_kills | Nombre de triple kills |
+| quadra_kills | Nombre de quadra kills |
+| penta_kills | Nombre de penta kills |
+| largest_multi_kill | Plus grand nombre de kills en série |
+| kill_participation | Taux de participation aux kills |
+| deaths | Nombre de morts du joueur |
+| assists | Nombre d'assists réalisés par le joueur |
+
+Nous avons fait des filtrations de données car elles sont importantes pour la suite des analyses statistiques. Ces filtrations nous permettent de nous focaliser sur les parties normales (classiques) et les parties où les joueurs étaient présents au commencement.Pour cela, les données des parties personnalisées et le mode du jeu du moment considérés comme des données bruits ont été éliminés. Ainsi que les parties qui se terminaient avant 5 minutes de jeu.
+
+## 2. Explication statistique :
+
+Notre application permet de représenter les indicateurs de performance de Faker, plus précisément : – Les KDA (Kill/Death/Assist) sont les résultats du nombre d’ennemis tués, du nombre de fois où il est mort, du nombre de fois où il a aidé un coéquipier à tuer un ennemi. – Les Gold sont le nombre de monnaies récoltées qui sont importantes dans le jeu dans le but d’avoir des objets plus performants. – Les dégâts aux champions sont le total des points de vie (PV) que Faker a retirés aux adversaires. – Les builds d’items sont l’équipement.
+
+### 1. Les habitudes de jeux de Faker
+
+#### 1.1 L’évolution du KDA de Faker en fonction des parties
+
+```{r kda, echo=FALSE}
+KDA <- faker_classique |>
+  filter(lane != "NONE") |>
+  mutate(result = ifelse(win, "Win", "Lose"),
+         kda = (kills + assists) / pmax(1, deaths)) |>
+  group_by(kda) |>
+  count(kda)
+
+ggplot(KDA, aes(x = kda)) +
+  geom_histogram(bins = 30, fill = "#007bc2", color = "white", alpha = 0.8) +
+  geom_vline(aes(xintercept = median(kda, na.rm = TRUE)), color = "red", linetype = "dashed") +
+  labs(title = "Distribution du KDA", x = "KDA", y = "Parties") + theme_minimal()
+```
+
+La majorité des parties ont tendance à avoir un KDA positif. C’est ce à quoi nous nous attendions aux vues de son niveau sur les matchs professionnels. La médiane (la droite pointillée en rouge) se situe entre 3,5 et 4 de KDA. Cela signifie que dans une partie normale, Faker contribue 4 fois plus aux éliminations des joueurs qu’il ne meurt. Les parties au-delà de 5 de KDA peuvent être considérées comme des parties où Faker est de très loin le meilleur joueur de la partie, on voir même que certaines fois, Faker approche 20 de KDA, ce qui est immense. Ce sont des parties où il a largement dominé la partie sans mourir. Contrairement à certains joueurs qui jouent uniquement pour avoir beaucoup de “Kills”, Faker a souvent un nombre d’assistances très élevé. Il est célèbre pour jouer des personnages utilitaires (comme Galio) pour aider son équipe partout sur la carte, quitte à se sacrifier. Un KDA de 4 ou 5 est excellent chez un pro.
+
+#### 1.2 Les champions qu'il utilise le plus
+
+```{r top, echo=FALSE}
+
+# Top 10 champions les plus joués
+top10_champs <- faker_classique |>
+  count(championName) |>
+  arrange(desc(n)) |>
+  slice(1:10) |>
+  pull(championName)
+
+# Filtrer et préparer les données
+data_top10 <- faker_classique |>
+  filter(championName %in% top10_champs, lane != "NONE") |>
+  count(championName, lane)
+
+# Calculer le total par champion pour l'ordre
+champ_order <- data_top10 |>
+  group_by(championName) |>
+  summarise(total = sum(n)) |>
+  arrange(desc(total)) |>
+  pull(championName)
+
+# Graphique empilé 
+ggplot(data_top10, aes(x = factor(championName, levels = champ_order), y = n, fill = lane)) +
+  geom_bar(stat = "identity", position = position_stack()) +
+  labs(title = "Top 10 des champions les plus joués avec leur rôle",
+       x = "Champion", y = "Nombre de parties", fill = "Rôle") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(expand = expansion(add = 0.5))
+```
+
+On remarque que Faker joue le plus souvent avec Azir en tant que MidLaner (poste du milieu) si on compare avec le graphique des parties par rôle. Azir est le personnage signature de Faker, c’est un mage qui demande une maîtrise des soldats de sable.
+
+Ensuite, les champions Voyageurs, Roamers (Taliyah, Galio, Twisted Fate) sont joués mais moins fréquemment. Ces personnages sont faits pour quitter la “Midlane” et aller aider les autres. Ce constat nous permet de faire le lien avec le graphique précédent, cela renforce sa stratégie de travail en équipe. Avec quelques personnages, Faker joue sur la Voie TopLane (poste du haut) . Il sait gérer à la fois Mid et Top, ce qui est une stratégie intéressante pour déstabiliser l’adversaire, car celui-ci ne peut pas savoir où le champion va aller.
+
+D’autres champions dans un autre style, des carrys purs (du corps à corps) sont utilisés comme Yone, Sylas. Les derniers champignons ont joué que récemment. Le champion Ryze est joué avec la voie de la jungle et le champion Annie est joué avec la voie du bas. Cela prouve la polyvalence de Faker, ainsi que sa capacité à s'adapter rapidement à toute situation et à changer de personnage si le besoin s'en fait ressentir.
+
+#### 1.3 Les rôles que Faker joue le plus (haut, milieu, bas, support, jungle)
+
+```{r role, echo=FALSE}
+# Calculer la fréquence par rôle
+role_freq <- faker_classique |> 
+  filter( lane != "NONE") |>
+  group_by(lane) |>
+  summarise(freq = n() / nrow(faker_all_matches)) |>
+  arrange(desc(freq))
+
+# Créer le graphique
+ggplot(role_freq, aes(x = reorder(lane, -freq), y = freq, fill = lane)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = scales::percent(freq, accuracy = 0.1)), vjust = -0.5) +
+  labs(title = "Fréquence des parties par rôle", x = "Rôle", y = "Fréquence") +
+  scale_y_continuous(labels = percent) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+La représentation confirme les propos précédents, le milieu est dominant par rapport aux autres rôles, peu importe les champions. Les autres propositions sont presque négligeables. On parle des hauts avec 7,7 %, puis de Jungle et enfin du bas avec 1,1 %, négligeable.
+
+### 2. Les Farming :
+
+Le farming est l’action de tuer des “monstres” qui se trouvent sur notre chemin. Grâce à cela, plusieurs points sont notés, comme les sbires, les noms des “monstres”, apparaissant à un intervalle régulier à partir de 1 minute 30 du début du jeu jusqu’à la fin.
+
+Le principal intérêt des sbires est de gagner de l’or dans le jeu dans le but d’acheter des objets plus puissants. Cela permet également au champion de monter de niveau, pour devenir plus puissant.
+
+```{r sbire, echo=FALSE}
+# Préparer les données
+data_roles <- faker_classique |>
+  filter(!lane %in% c("NONE", "BOTTOM", "JUNGLE")) |>
+  mutate(result = ifelse(win, "Win", "Lose"))
+
+# Graphique par rôle
+ggplot(data_roles, aes(x = result, y = minions_killed, fill = result)) +
+  geom_boxplot() +
+  facet_wrap(~ lane, scales = "free") +
+  labs(title = "Sbires tués par partie selon victoire/défaite",
+       x = "Résultat", y = "Sbires tués") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+Sur la même cadence, la voie du milieu reste constante s’il perd ou s’il gagne. Ces résultats montrent que quand Faker gagne en Mid, il tue plus de sbires.
+
+Tandis que la voie du Haut est plus nuancée, les parties perdues ont des écarts plus importants mais une médiane plus élevée. Cela signie qu’il tue plus sbires en moyenne quand il perd. C’est une autre façon de jouer, qui le met moins en valeur ce qui paraît cohérent au vu des résultats.
+
+Nous avons retiré les deux autres types rôles car les données sont négligeables et peu révélatrices.
+
+
+```{r or1, echo=FALSE, message=FALSE, warning=FALSE}
+# Préparer les données avec labels Win / Lose
+data_roles <- faker_classique |>
+  filter(!lane %in% c("NONE", "BOTTOM", "JUNGLE")) |>
+  mutate(result = ifelse(win, "Win", "Lose"))
+
+# Graphique par rôle pour l'or gagné
+ggplot(data_roles, aes(x = result, y = gold_earned, fill = result)) +
+  geom_boxplot() +
+  facet_wrap(~ lane, scales = "free") +
+  labs(title = "Or gagné par partie selon victoire/défaite",
+       x = "Résultat", y = "Or gagné") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+On constate qu’aux plus il obtient de l’or, au plus il a de chance de gagner même avec les rôles qu'il maîtrise le moins. Le graphique Lose dans TOP est en lien avec la représentation en fonction des sbire tué car les écarts des valeurs sont toujours élévés.
+
+A l’aide du graphique on peut déduire que gagner de l’or lui permet de gagner plus facilement la partie, ainsi on constate que c'est Faker qui fait la différence individuellement grâce à l'or qu'il a pu gagner.
+
+L’impact d’un joueur dans une partie se remarque par ses dégâts ou sa participation aux éliminations. Nous pouvons visualiser ces facteurs de la façon suivante :
+
+```{r or2, echo=FALSE, message=FALSE, warning=FALSE}
+# Préparer les données
+data_damage_gold <- faker_classique |>
+  mutate(result = ifelse(win == "TRUE", "Win", "Lose")) |>
+  select(gold_earned, damage_dealt, lane, result) |>
+  filter(!lane %in% c("NONE", "BOTTOM", "JUNGLE"))
+
+ggplot(data_damage_gold, aes(x = gold_earned, y = damage_dealt, color = result)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ lane) +  # Un graphique par rôle
+  labs(
+    title = "Dégâts infligés en fonction de l'or gagné, par rôle et résultat",
+    x = "Or gagné (en milliers)",
+    y = "Dégâts infligés (en milliers)",
+    color = "Résultat"
+  ) +
+  scale_x_continuous(labels = label_number(scale = 0.001, suffix = "k")) +
+  scale_y_continuous(labels = label_number(scale = 0.001, suffix = "k")) +
+  theme_minimal()
+
+data_gold_kp <- faker_classique |>
+  mutate(result = ifelse(win, "Win", "Lose")) |>
+  select(gold_earned, kill_participation, lane, result) |>
+  filter(!lane %in% c("NONE", "BOTTOM", "JUNGLE") & !is.na(kill_participation))
+
+ggplot(data_gold_kp, aes(x = kill_participation, y = gold_earned, color = result)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ lane) +  # Un graphique par rôle
+  labs(
+    title = "Or gagné en fonction du taux de participation aux kills, par rôle et résultat",
+    x = "Taux de participation aux kills",
+    y = "Or gagné (en milliers)",
+    color = "Résultat"
+  ) +
+  scale_y_continuous(labels = label_number(scale = 0.001, suffix = "k")) +
+  theme_minimal()
+```
+
+On constate clairement qu’en fonction de l’or qu'il accumule, Faker inflige de plus en plus de dégâts et participe plus aux combats de son équipe. On peut également noter que le fait de participer aux éliminations favorise la victoire alors que ce n'est pas le cas pour le total de dégats.
+
+Pour conclure ceci, on peut dire que Faker est beaucoup plus impactant dans les parties quand il prend de l'avance sur l'or, lui permettant de participer aux éliminations, et de gagner les parties.
