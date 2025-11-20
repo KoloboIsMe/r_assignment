@@ -1,6 +1,6 @@
 ---
 title: "Rapport_R"
-author: "Barthélemy Elliot, Hoste Aurore,  Mazgar Ines, Pons Manuel"
+author: "Barthélemy Elliot, Hoste Aurore,  Mazgar Ines, Pons Manuel, Rouge Gabriel"
 date: "2025-11-09"
 output: html_document
 ---
@@ -12,13 +12,31 @@ output: html_document
 Dans le cadre d'un travail de groupe, nous souhaitons analyser les données de jeu de Faker (Lee Sang-hyeok, en coréen 이상혁), considéré comme le meilleur joueur de l'histoire de League of Legends en utilisant RStudio. Il joue au poste de Midlaner pour l'équipe T1. 
 Avec un palmarès exceptionnel : six titres de champion du monde, deux titres internationaux et dix fois champion de Corée. Il a donc battu tous les records depuis sa première game en 2013. Figure emblématique du gaming, il incarne la perfection et l'innovation dans ce domaine ce qui en fait un sujet d'étude idéal pour notre projet. 
 
-Nous avons choisi Faker, notamment pour sa popularité, les nombreuses données disponibles sur ses parties mais aussi pour étudier les performances d’un champion reconnu.Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases.
-Notre objectif est d’étudier ses performances en les publiant sur un site de statistiques et en les représentant graphiquement. Ces données pourraient nous aider à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettront de mieux comprendre comment il s’adapte et comment il progresse avec le temps. Et en plus, ces analyses pourront servir d’inspiration ou d’aide d'autres joueurs.
+Nous avons choisi Faker, notamment pour sa popularité, les nombreuses données disponibles sur ses parties mais aussi pour étudier les performances d’un champion reconnu. Notre groupe souhaitait allier la passion pour League of Legends et l’analyse statistique. Nous apprécions tous ce jeu, ou en connaissons au moins les bases.
+Notre objectif est d’étudier ses performances en les publiant sur un site de statistiques et en les représentant graphiquement. Ces données pourraient nous aider à comprendre sa manière de jouer et les stratégies qu’il emploie pour gagner. Elles permettront de mieux comprendre comment il s’adapte et comment il progresse avec le temps. Et en plus, ces analyses pourront servir d’inspiration ou d’aide à d'autres joueurs.
 
-Pour obtenir les données, on a été sur le site Riot Games : 
-https://developer.riotgames.com/apis#match-v5/GET_getMatch 
+Ces données sont extraites de l'API (Application Programming Interface) officielle de la société RIOT, combinée à quelques données de l'API ddragon qui expose certains assets (icônes, illustrations, etc.) du jeu League Of Legends.
 
-Voici les jeux de données qu'on a choisi en tableau, venant du fichier "faker_all_matches.csv" : 
+Une API est une source de données accessibles via des appels HTTP. Ici, grâce à un bref script python présent dans l'archive, nous itérons automatiquement sur toutes les parties de League Of Legends jouées par Faker sur le serveur coréen pour en extraire les données proposées par l'API.
+
+L'algorithme s'occupe également de traiter puis ranger les données dans un fichier CSV pour faciliter leur usage dans notre rapport et notre application en R. 
+
+Voici une explication vulgarisée du processus : 
+
+### Etape 0 : Configurer l'algorithme 
+  La configuration de l'algorithme se fait en remplissant les variables au début de celui-ci. Pour ce faire, nous devons : 
+    - **Authentifier une application** auprès de RIOT. C'est à dire ; se créer un compte, déclarer notre application (en indiquant l'usage que nous ferons des données), et attendre qu'ils nous autorisent de récupérer ces données. Cette autorisation prend la forme d'une **clé API**.
+    - Récupérer le **PUUID** (Player Unique User Id) du compte coréen de Faker. C'est un code qui est dynamique et il faut donc le récupérer régulièrement au cas où il est mis à jour. Nous le faisons manuellement via l'appel ``AccountV1: Accounts by Riot Id`` de l'API.
+
+### Etape 1 : Récupérer les MatchID
+Grâce à l'appel ``MatchV5:Match ids by PUUID``, nous récupérons en une itération l'ensemble des identifiants uniques des parties jouées par faker.
+
+### Etape 2 : Récupérer les MatchDTO
+Nous faisont ensuite usage de l'appel ``MatchV5: Match by MatchId`` pour obtenir les MatchDTO (DTO signifiant "Data Transfer Object") correspondants. Cette structure de donnée complexe contient la totalité des informations que RIOT nous donne au sujet de ces parties de jeu. Le détail de la structure de cette donnée est disponible sur le site de l'API.
+
+### Etape 3 : Traiter et enregistrer
+  La structure de données étant complexe et imbriquée à plusieurs niveau, nous modifions le format des données pour le rendre plus exploitable et finalement en faire un fichier CSV qui prend cette forme : 
+
 ```{r setup, include=FALSE}
 library(kableExtra)
 # Création d'un data frame avec les descriptions
@@ -70,7 +88,7 @@ columns_description <- data.frame(
 )
 
 # Affichage du tableau en Markdown
-kable(columns_description, format = "pipe", caption = "Description des colonnes de l'API Riot") %>%
+kable(columns_description, format = "pipe", caption = "Description des colonnes de l'API Riot") |>
   kable_styling(bootstrap_options = c("striped", "hover"))
 print(columns_description)
 knitr::kable(columns_description)

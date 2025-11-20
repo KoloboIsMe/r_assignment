@@ -46,15 +46,15 @@ get_champ_img_url <- function(champion_name) {
 tryCatch({
   data <- read.csv("faker_all_matches.csv")
   
-  data_classic <- data %>%
-    filter(game_mode == "CLASSIC") %>%
+  data_classic <- data |>
+    filter(game_mode == "CLASSIC") |>
     mutate(
       kills = ifelse(is.na(kills), 0, kills),
       assists = ifelse(is.na(assists), 0, assists),
       deaths = ifelse(is.na(deaths), 0, deaths),
       solo_kills = ifelse(is.na(solo_kills), 0, solo_kills),
       kill_participation = ifelse(is.na(kill_participation), 0, kill_participation)
-    ) %>%
+    ) |>
     mutate(
       # *** CORRECTION ROBUSTE ***
       # Convertit en texte minuscule, puis compare à "true".
@@ -98,16 +98,16 @@ shinyServer(function(input, output, session) {
   })
   
   output$champBarPlot <- renderPlot({
-    champ_data <- data_classic %>%
-      mutate(championName = fct_lump_n(championName, 10, w = NULL)) %>%
-      count(championName, name = "count") %>% filter(championName != "Other")
+    champ_data <- data_classic |>
+      mutate(championName = fct_lump_n(championName, 10, w = NULL)) |>
+      count(championName, name = "count") |> filter(championName != "Other")
     ggplot(champ_data, aes(x = reorder(championName, count), y = count, fill = championName)) +
       geom_bar(stat = "identity", show.legend = FALSE) + coord_flip() +
       labs(title = "Top 10 Champions", x = "Champion", y = "Parties") + theme_minimal()
   })
   
   output$roleBarPlot <- renderPlot({
-    role_data <- data_classic %>% count(lane, name = "count")
+    role_data <- data_classic |> count(lane, name = "count")
     ggplot(role_data, aes(x = reorder(lane, count), y = count, fill = lane)) +
       geom_bar(stat = "identity", show.legend = FALSE) + coord_flip() +
       labs(title = "Parties par Rôle", x = "Rôle", y = "Parties") + theme_minimal()
@@ -116,8 +116,8 @@ shinyServer(function(input, output, session) {
   # --- ONGLET 3 : PERFORMANCE ---
   reactive_filtered_data <- reactive({
     req(input$durationSlider, input$roleFilter, input$championFilter)
-    df <- data_classic %>% filter(duration_min >= input$durationSlider[1], duration_min <= input$durationSlider[2], lane %in% input$roleFilter)
-    if (!("Tous" %in% input$championFilter)) { df <- df %>% filter(championName %in% input$championFilter) }
+    df <- data_classic |> filter(duration_min >= input$durationSlider[1], duration_min <= input$durationSlider[2], lane %in% input$roleFilter)
+    if (!("Tous" %in% input$championFilter)) { df <- df |> filter(championName %in% input$championFilter) }
     return(df)
   })
   
@@ -129,8 +129,8 @@ shinyServer(function(input, output, session) {
   })
   
   output$victoryFactorsPlot <- renderPlot({
-    df_pivoted <- reactive_filtered_data() %>%
-      select(win_text, "Part. Kills" = kill_participation, "Solo Kills" = solo_kills, "CS Total" = minions_killed, "KDA" = kda) %>%
+    df_pivoted <- reactive_filtered_data() |>
+      select(win_text, "Part. Kills" = kill_participation, "Solo Kills" = solo_kills, "CS Total" = minions_killed, "KDA" = kda) |>
       pivot_longer(cols = -win_text, names_to = "stat_type", values_to = "value")
     
     ggplot(df_pivoted, aes(x = win_text, y = value, fill = win_text)) +
@@ -150,7 +150,7 @@ shinyServer(function(input, output, session) {
   
   reactive_champ_data <- reactive({
     req(input$championSelect)
-    data_classic %>% filter(championName == input$championSelect)
+    data_classic |> filter(championName == input$championSelect)
   })
   
   output$matchHistoryTitle <- renderText({
@@ -188,7 +188,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$matchHistoryTable <- DT::renderDT({
-    champ_data <- reactive_champ_data() %>%
+    champ_data <- reactive_champ_data() |>
       select(win, kills, deaths, assists, kda, minions_killed, gold_earned, items) 
     
     items_html <- sapply(champ_data$items, function(items_string) {
@@ -202,12 +202,12 @@ shinyServer(function(input, output, session) {
       paste(img_tags, collapse = "")
     })
     
-    display_data <- champ_data %>%
+    display_data <- champ_data |>
       mutate(
         Items = items_html,
         KDA = paste(kills, deaths, assists, sep = "/"),
         Victoire = ifelse(win, "<span style='color:green; font-weight:bold;'>Victoire</span>", "<span style='color:red;'>Défaite</span>")
-      ) %>%
+      ) |>
       select(Victoire, KDA, "CS" = minions_killed, "Gold" = gold_earned, Items)
     
     datatable(display_data, escape = FALSE, rownames = FALSE, 
