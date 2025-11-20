@@ -13,7 +13,7 @@ shinyUI(
   navbarPage(
     title = "Analyse Visuelle - Faker",
     theme = shinythemes::shinytheme("flatly"), 
-    
+
     # --- ONGLET 1 : ACCUEIL ---
     tabPanel(
       "Accueil",
@@ -49,7 +49,7 @@ shinyUI(
         )
       )
     ),
-    
+
     # --- ONGLET 2 : VUE D'ENSEMBLE ---
     tabPanel(
       "Vue d'ensemble",
@@ -65,7 +65,7 @@ shinyUI(
         )
       )
     ),
-    
+
     # --- ONGLET 3 : ANALYSE DE PERFORMANCE ---
     tabPanel(
       "Analyse de Performance",
@@ -74,7 +74,7 @@ shinyUI(
         sidebarPanel(
           width = 3,
           h4("Filtres de Performance"),
-          
+
           selectInput(
             "championFilter",
             "Filtrer par Champion :",
@@ -107,7 +107,7 @@ shinyUI(
         )
       )
     ),
-    
+
     # --- ONGLET 4 : HISTORIQUE VISUEL ---
     tabPanel(
       "Historique Visuel des Matchs",
@@ -115,15 +115,14 @@ shinyUI(
       sidebarLayout(
         sidebarPanel(
           width = 3,
-          
+
           selectInput(
             "championSelect",
             "Choisir un champion :",
             choices = NULL
           ),
-          
           hr(),
-          
+
           # *** NOUVEAU : Zone pour les stats récapitulatives ***
           uiOutput("champStatsCard")
         ),
